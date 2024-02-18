@@ -189,11 +189,13 @@ class CrcGen:
 		     nrCrcBits,
 		     nrDataBits=8,
 		     shiftRight=False,
+		     shiftRightData=False,
 		     optimize=OPT_ALL):
 		self._P = P
 		self._nrCrcBits = nrCrcBits
 		self._nrDataBits = nrDataBits
 		self._shiftRight = shiftRight
+		self._shiftRightData = shiftRightData
 		self._optimize = optimize
 
 	def __gen(self, dataVarName, crcVarName):
@@ -235,7 +237,8 @@ class CrcGen:
 		# Run the shift register for each input data bit.
 		word = inCrc
 		if self._shiftRight:
-			for i in range(nrDataBits):
+			rng = reversed(range(nrDataBits)) if self._shiftRightData else range(nrDataBits)
+			for i in rng:
 				# Run the shift register once.
 				bits = []
 				for j in range(nrCrcBits):
@@ -248,7 +251,8 @@ class CrcGen:
 					bits.append(stateBit)
 				word = optimize(Word(*bits))
 		else:
-			for i in reversed(range(nrDataBits)):
+			rng = reversed(range(nrDataBits)) if self._shiftRightData else range(nrDataBits)
+			for i in rng:
 				# Run the shift register once.
 				bits = []
 				for j in range(nrCrcBits):
@@ -284,10 +288,12 @@ USE OR PERFORMANCE OF THIS SOFTWARE."""
 	def __algDescription(self):
 		pstr = int2poly(self._P, self._nrCrcBits, self._shiftRight)
 		shift = "right (little endian)" if self._shiftRight else "left (big endian)"
+		shift_data = "right (little endian)" if self._shiftRightData else "left (big endian)"
 		return (f"CRC polynomial coefficients: {pstr}\n"
 			f"                             0x{self._P:X} (hex)\n"
 			f"CRC width:                   {self._nrCrcBits} bits\n"
 			f"CRC shift direction:         {shift}\n"
+			f"Data shift direction:        {shift_data}\n"
 			f"Input word width:            {self._nrDataBits} bits\n")
 
 	def genPython(self,
@@ -337,7 +343,7 @@ USE OR PERFORMANCE OF THIS SOFTWARE."""
 		ret.extend("// " + l for l in self.__algDescription().splitlines())
 		ret.append("")
 		if genFunction:
-			ret.append(f"function automatic [{self._nrCrcBits - 1}:0] {name};")
+			ret.append(f"function [{self._nrCrcBits - 1}:0] {name};")
 		else:
 			ret.append(f"module {name} (")
 		end = ";" if genFunction else ","

@@ -92,8 +92,9 @@ def main():
         p.add_argument("-P", "--polynomial", type=str, help="Use this CRC polynomial for code generation")
         p.add_argument("-B", "--nr-crc-bits", type=argInt, help="Number of CRC bits.")
         p.add_argument("-b", "--nr-data-bits", type=argInt, default="8", help="Number of input data word bits.")
-        g = p.add_mutually_exclusive_group()
-        g.add_argument("-R", "--shift-right", action="store_true", default=False, help="CRC algorithm shift direction: right shift")
+        # g = p.add_mutually_exclusive_group()
+        p.add_argument("-R", "--shift-right", action="store_true", default=False, help="CRC algorithm shift direction: right shift")
+        p.add_argument("-r", "--shift-right-data", action="store_true", default=False, help="CRC algorithm data shift direction: right shift")
         # g.add_argument("-L", "--shift-left", action="store_true", default=True, help="CRC algorithm shift direction: left shift")
         p.add_argument("-n", "--name", type=str, default="crc", help="Generated function/module name")
         p.add_argument("-D", "--data-param", type=str, default="d", help="Generated function/module data parameter name")
@@ -128,6 +129,7 @@ def main():
         if args.nr_crc_bits is not None:
             crcParameters["nrBits"] = args.nr_crc_bits
         crcParameters["shiftRight"] = args.shift_right
+        crcParameters["shiftRightData"] = args.shift_right_data
         # if args.shift_left:
         #     crcParameters["shiftRight"] = False
         if args.polynomial is not None:
@@ -136,6 +138,7 @@ def main():
         polynomial = crcParameters["polynomial"]
         nrCrcBits = crcParameters["nrBits"]
         shiftRight = crcParameters["shiftRight"]
+        shiftRightData = crcParameters["shiftRightData"]
 
         if polynomial > ((1 << nrCrcBits) - 1):
             raise CrcGenError(f"Invalid polynomial. " f"It is bigger than the CRC width " f"of (2**{nrCrcBits})-1.")
@@ -147,7 +150,7 @@ def main():
         else:
             CrcGenClass = CrcGen
 
-        gen = CrcGenClass(P=polynomial, nrCrcBits=nrCrcBits, nrDataBits=args.nr_data_bits, shiftRight=shiftRight, optimize=args.optimize)
+        gen = CrcGenClass(P=polynomial, nrCrcBits=nrCrcBits, nrDataBits=args.nr_data_bits, shiftRight=shiftRight, shiftRightData=shiftRightData, optimize=args.optimize)
         if args.test:
             gen.runTests()
         else:
